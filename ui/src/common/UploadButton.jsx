@@ -52,7 +52,7 @@ export const UploadButton = () => {
         const parsed = JSON.parse(error.message)
         if (parsed.error) errorMsg = parsed.error
       } catch (e) {
-        console.error(e)
+        void 0
       }
 
       setToast({
