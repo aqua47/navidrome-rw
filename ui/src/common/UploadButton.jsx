@@ -1,13 +1,8 @@
 import React, { useState } from 'react'
-import {
-  CircularProgress,
-  Tooltip,
-  Snackbar,
-  Box,
-} from '@material-ui/core'
+import { CircularProgress, Tooltip, Snackbar, Box } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import UploadIcon from '@material-ui/icons/Publish'
-import { Button } from 'react-admin' 
+import { Button } from 'react-admin'
 
 export const UploadButton = () => {
   const [uploading, setUploading] = useState(false)
@@ -27,14 +22,16 @@ export const UploadButton = () => {
 
     setUploading(true)
 
-    const token = localStorage.getItem('x-nd-authorization') || localStorage.getItem('token')
+    const token =
+      localStorage.getItem('x-nd-authorization') ||
+      localStorage.getItem('token')
 
     try {
       const response = await fetch('/api/song/upload', {
         method: 'POST',
         headers: {
           ...(token && { 'X-ND-Authorization': `Bearer ${token}` }),
-          ...(token && { 'Authorization': `Bearer ${token}` }),
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: formData,
       })
