@@ -41,18 +41,18 @@ func (s *mp3Service) UploadSong(ctx context.Context, filename string, fileData i
 
 	targetDir := "/music"
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return nil, fmt.Errorf("impossible de créer le dossier de destination: %w", err)
+		return nil, fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
 	destPath := filepath.Join(targetDir, cleanName)
 	out, err := os.Create(destPath)
 	if err != nil {
-		return nil, fmt.Errorf("impossible de créer le fichier sur le disque: %w", err)
+		return nil, fmt.Errorf("failed to create file on disk: %w", err)
 	}
 	defer out.Close()
 
 	if _, err = io.Copy(out, fileData); err != nil {
-		return nil, fmt.Errorf("échec lors de l'écriture du fichier: %w", err)
+		return nil, fmt.Errorf("failed to write file to disk: %w", err)
 	}
 
 	newSong := &model.MediaFile{
@@ -64,7 +64,7 @@ func (s *mp3Service) UploadSong(ctx context.Context, filename string, fileData i
 	}
 
 	if err := s.repo.AddSong(ctx, newSong); err != nil {
-		return nil, fmt.Errorf("impossible d'ajouter la musique au dépôt: %w", err)
+		return nil, fmt.Errorf("failed to add song to repository: %w", err)
 	}
 
 	return newSong, nil
