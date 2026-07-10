@@ -22,11 +22,7 @@ func NewRepository(ds model.DataStore, library core.Library, scanner model.Scann
 }
 
 func (r *navidromeRepo) AddSong(ctx context.Context, song *model.MediaFile) error {
-	err := r.ds.MediaFile(ctx).Put(song)
-	if err != nil {
-		return err
-	}
-	_, err = r.scanner.ScanAll(ctx, false)
+	_, err := r.scanner.ScanAll(ctx, false)
 	return err
 }
 

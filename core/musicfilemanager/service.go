@@ -39,7 +39,7 @@ func NewService(repo SongRepository) MusicFileService {
 func (s *mp3Service) UploadSong(ctx context.Context, filename string, fileData io.Reader) (*model.MediaFile, error) {
 	cleanName := filepath.Base(filename)
 
-	targetDir := "music"
+	targetDir := "/music"
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return nil, fmt.Errorf("impossible de créer le dossier de destination: %w", err)
 	}
@@ -56,7 +56,6 @@ func (s *mp3Service) UploadSong(ctx context.Context, filename string, fileData i
 	}
 
 	newSong := &model.MediaFile{
-		ID:        strings.TrimSuffix(cleanName, filepath.Ext(cleanName)), // Identifiant basé sur le nom
 		Title:     strings.TrimSuffix(cleanName, filepath.Ext(cleanName)),
 		Path:      destPath,
 		Suffix:    "mp3",
@@ -83,7 +82,6 @@ func (s *mp3Service) UpdateTags(ctx context.Context, songID string, tags map[str
 		return fmt.Errorf("file is inaccessible or is a directory: %s", cleanPath)
 	}
 
-	// Ensure we are only processing MP3 files as id3v2 library is specific to ID3 tags
 	if !strings.HasSuffix(strings.ToLower(cleanPath), ".mp3") {
 		return fmt.Errorf("metadata editing is currently only supported for MP3 files")
 	}
@@ -137,7 +135,6 @@ func (s *mp3Service) UpdateTags(ctx context.Context, songID string, tags map[str
 		return fmt.Errorf("error saving MP3 tags: %w", err)
 	}
 
-	// Trigger a rescan of this song so Navidrome updates its database (seems to generate lag)
 	return s.repo.RefreshSong(ctx, songID)
 }
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  Button,
   CircularProgress,
   Tooltip,
   Snackbar,
@@ -8,6 +7,7 @@ import {
 } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
 import UploadIcon from '@material-ui/icons/Publish'
+import { Button } from 'react-admin' 
 
 export const UploadButton = () => {
   const [uploading, setUploading] = useState(false)
@@ -27,9 +27,15 @@ export const UploadButton = () => {
 
     setUploading(true)
 
+    const token = localStorage.getItem('x-nd-authorization') || localStorage.getItem('token')
+
     try {
       const response = await fetch('/api/song/upload', {
         method: 'POST',
+        headers: {
+          ...(token && { 'X-ND-Authorization': `Bearer ${token}` }),
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
         body: formData,
       })
 
@@ -44,9 +50,15 @@ export const UploadButton = () => {
         severity: 'success',
       })
     } catch (error) {
+      let errorMsg = error.message
+      try {
+        const parsed = JSON.parse(error.message)
+        if (parsed.error) errorMsg = parsed.error
+      } catch (e) {}
+
       setToast({
         open: true,
-        message: `Error : ${error.message}`,
+        message: `Error : ${errorMsg}`,
         severity: 'error',
       })
     } finally {
@@ -68,20 +80,17 @@ export const UploadButton = () => {
       <label htmlFor="navidrome-upload-input">
         <Tooltip title="Upload audio file">
           <span>
+            {}
             <Button
-              variant="contained"
-              color="secondary"
               component="span"
-              startIcon={
-                uploading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <UploadIcon />
-                )
-              }
               disabled={uploading}
+              label={uploading ? 'Uploading...' : 'Uploader'}
             >
-              {uploading ? 'Uploading...' : 'Uploader'}
+              {uploading ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <UploadIcon />
+              )}
             </Button>
           </span>
         </Tooltip>
