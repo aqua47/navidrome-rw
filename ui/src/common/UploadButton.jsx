@@ -51,7 +51,9 @@ export const UploadButton = () => {
       try {
         const parsed = JSON.parse(error.message)
         if (parsed.error) errorMsg = parsed.error
-      } catch (e) {}
+      } catch (e) {
+        console.error(e)
+      }
 
       setToast({
         open: true,
