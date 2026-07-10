@@ -16,6 +16,7 @@ import (
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/navidrome/navidrome/utils/str"
 	"github.com/pocketbase/dbx"
 )
 
@@ -62,7 +63,7 @@ func (m *dbMediaFile) PostMapArgs(args map[string]any) error {
 	fullText = append(fullText, participantNames...)
 	args["full_text"] = formatFullText(fullText...)
 	args["search_participants"] = strings.Join(participantNames, " ")
-	args["search_normalized"] = normalizeForFTS(m.FullTitle(), m.Album, m.Artist, m.AlbumArtist)
+	args["search_normalized"] = str.NormalizeForFTS(m.FullTitle(), m.Album, m.Artist, m.AlbumArtist)
 	args["tags"] = marshalTags(m.MediaFile.Tags)
 	args["participants"] = marshalParticipants(m.MediaFile.Participants)
 	return nil
@@ -90,6 +91,16 @@ func NewMediaFileRepository(ctx context.Context, db dbx.Builder) model.MediaFile
 		"recently_added": mediaFileRecentlyAddedSort(),
 		"starred_at":     "starred, starred_at",
 		"rated_at":       "rating, rated_at",
+		"year":           "year",
+		"genre":          "genre",
+		"duration":       "duration",
+		"channels":       "channels",
+		"bpm":            "bpm",
+		"path":           "path",
+		"comment":        "comment",
+		"play_count":     "play_count",
+		"play_date":      "play_date",
+		"rating":         "rating",
 	})
 	return r
 }
@@ -117,15 +128,18 @@ var mediaFileFilter = sync.OnceValue(func() map[string]filterFunc {
 
 func mediaFileRecentlyAddedSort() string {
 	if conf.Server.RecentlyAddedByModTime {
-		return "media_file.updated_at"
+		return "media_file.updated_at, media_file.id"
 	}
-	return "media_file.created_at"
+	return "media_file.created_at, media_file.id"
 }
 
 func (r *mediaFileRepository) CountAll(options ...model.QueryOptions) (int64, error) {
 	query := r.newSelect()
-	query = r.withAnnotation(query, "media_file.id")
 	query = r.applyLibraryFilter(query)
+	// The annotation join is expensive with count(distinct) and pointless unless a filter uses it.
+	if filtersNeedAnnotation(r.applyFilters(query, options...)) {
+		query = r.withAnnotation(query, "media_file.id")
+	}
 	return r.count(query, options...)
 }
 
@@ -306,7 +320,7 @@ func (r *mediaFileRepository) FindByPaths(paths []string) (model.MediaFiles, err
 		return model.MediaFiles{}, nil
 	}
 
-	sel := r.newSelect().Columns("*").Where(query)
+	sel := r.applyLibraryFilter(r.newSelect().Columns("*").Where(query))
 	var res dbMediaFiles
 	if err := r.queryAll(sel, &res); err != nil {
 		return nil, err
